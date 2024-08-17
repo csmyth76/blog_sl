@@ -142,6 +142,8 @@ if st.button("Generate Blog Post"):
         st.error("Please enter the photographer's name before generating the blog post.")
     elif not tones:
         st.error("Please select at least one tone for the blog post.")
+    elif not tones:
+        st.error("Please select at least one tone for the blog post.")
     else:
         with st.spinner(f"Generating blog post using {models[model]}..."):
             blog_post_html = generate_blog_post(couple_name, wedding_outline, photographer_name, tones, keywords, seo_keywords, writer_tone, model, client_testimonial, contact_page)
