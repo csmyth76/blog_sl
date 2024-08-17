@@ -24,7 +24,7 @@ models = {
     "gpt-3.5-turbo": "GPT-3.5 (Faster, less capable)"
 }
 
-def generate_blog_post(couple_name, wedding_outline, photographer_name, tone, keywords, writer_tone, model):
+def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, keywords, writer_tone, model):
     writer_instruction = f"Write in the style of {writer_tone}: {writer_tones[writer_tone]}. " if writer_tone != "None" else ""
     
     prompt = f"""
@@ -32,7 +32,7 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tone, ke
     Use the following wedding outline to structure the post, but ONLY include details that are provided (non-empty):
     {wedding_outline}
     The photographer is {photographer_name}.
-    The overall tone should be {tone}.
+    The overall tone should be a combination of the following: {', '.join(tones)}.
     Include the following keywords: {keywords}.
     Make sure the content is unique and reflects ONLY the specific details provided in the outline.
     DO NOT mention or allude to any details that are not explicitly provided in the outline.
@@ -90,7 +90,15 @@ wedding_outline = "\n".join([
 wedding_outline = "\n".join(line for line in wedding_outline.split("\n") if line.split(": ", 1)[1].strip())
 
 photographer_name = st.text_input("Photographer's Name", "John Doe")
-tone = st.selectbox("Overall Tone of the Blog Post", ["romantic", "fun", "elegant", "rustic", "modern"])
+
+# Updated tone selection
+tone_options = [
+    "romantic", "fun", "elegant", "professional", "formal", "cheerful", "casual",
+    "enthusiastic", "conversational", "informative", "quirky", "snarky",
+    "trustworthy", "upbeat", "witty"
+]
+tones = st.multiselect("Overall Tone of the Blog Post (Select multiple)", tone_options)
+
 writer_tone = st.selectbox("Writing Style", list(writer_tones.keys()), format_func=lambda x: f"{x}: {writer_tones[x]}")
 keywords = st.text_input("Keywords (comma-separated)", "beach wedding, sunset, love, oceanfront")
 
@@ -102,9 +110,11 @@ if st.button("Generate Blog Post"):
         st.error("Please enter the couple's names before generating the blog post.")
     elif not photographer_name:
         st.error("Please enter the photographer's name before generating the blog post.")
+    elif not tones:
+        st.error("Please select at least one tone for the blog post.")
     else:
         with st.spinner(f"Generating blog post using {models[model]}..."):
-            blog_post = generate_blog_post(couple_name, wedding_outline, photographer_name, tone, keywords, writer_tone, model)
+            blog_post = generate_blog_post(couple_name, wedding_outline, photographer_name, tones, keywords, writer_tone, model)
         
         st.subheader("Generated Blog Post:")
         st.write(blog_post)
