@@ -3,7 +3,6 @@ from openai import OpenAI
 import html
 import re
 from unidecode import unidecode
-import datetime
 
 # Access your API key securely
 api_key = st.secrets["api_key"]
@@ -16,59 +15,6 @@ models = {
     "gpt-4": "GPT-4 (Default, more capable but slower)",
     "gpt-3.5-turbo": "GPT-3.5 (Faster, less capable)"
 }
-
-def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, seo_keywords, model, client_testimonial, contact_page):
-    testimonial_instruction = f'Include this client testimonial in a blockquote: "<blockquote>{html.escape(client_testimonial)}</blockquote>"' if client_testimonial.strip() else "Do not include a client testimonial."
-    
-    prompt = f"""
-    Create a wedding blog post for a couple named {couple_name}, following this exact structure and using HTML tags:
-
-    <h1>[Create a catchy title for the blog post, incorporating one or two SEO keywords if possible]</h1>
-
-    <p>[Introductory Paragraph: Write a brief overview of the wedding day, setting the scene and introducing the couple. Try to naturally include one or two SEO keywords.]</p>
-
-    <h2>A Day to Remember: {couple_name}'s [Location] Wedding</h2>
-
-    <p>[In this section, summarize the key details of the wedding day. Include information about the ceremony and reception venues, any unique aspects of the wedding, and highlight some emotional moments. Use the following wedding outline, but ONLY include details that are provided (non-empty):
-    {wedding_outline}
-    Incorporate SEO keywords naturally throughout this section.
-
-    If venue URLs are provided, create HTML links to the venues using appropriate anchor text that includes the venue names for better SEO. For example:
-    - If a ceremony venue URL is provided: <a href="[ceremony_venue_url]">[ceremony_venue_name]</a>
-    - If a reception venue URL is provided: <a href="[reception_venue_url]">[reception_venue_name]</a>
-    ]</p>
-
-    <h2>Capturing Love and [Include one or two relevant SEO keywords]</h2>
-
-    <p>[In this final section, focus on the SEO keywords the photographer wants to rank for. Describe how you, as the photographer, captured the essence of the day. Especially focus on these SEO keywords: {seo_keywords}. End with a call-to-action inviting readers to contact you for their own wedding photography needs, using the provided contact page link: {contact_page}]</p>
-
-    {testimonial_instruction}
-
-    Write from the consistent perspective of the photographer ({photographer_name}), maintaining a first-person point of view throughout the post.
-    The overall tone should be a combination of the following: {', '.join(tones)}.
-    Make sure the content is unique and reflects ONLY the specific details provided in the outline.
-    DO NOT mention or allude to any details that are not explicitly provided in the outline.
-    If a piece of information is not available (i.e., if the corresponding field in the outline is empty), 
-    simply omit it from the blog post without drawing attention to its absence.
-    The blog post should be around 400-500 words long.
-    Remember to maintain a consistent first-person perspective as the photographer throughout the entire post.
-    Naturally incorporate the SEO keywords throughout the post, ensuring they fit seamlessly into the content.
-    Use appropriate HTML tags for paragraphs, emphasis, and links where necessary.
-    """
-
-    completion = client.chat.completions.create(
-        model=model,
-        messages=[
-            {"role": "system", "content": "You are a skilled wedding photographer writing a structured, SEO-optimized blog post in HTML format. Maintain a consistent first-person perspective throughout the post and follow the given structure exactly."},
-            {"role": "user", "content": prompt}
-        ],
-        max_tokens=1000,
-        n=1,
-        stop=None,
-        temperature=0.7,
-    )
-
-    return completion.choices[0].message.content.strip()
 
 def generate_permalink(couple_name, ceremony_location, wedding_date):
     # Process couple's name: remove 'and', replace spaces with hyphens
@@ -89,7 +35,15 @@ def generate_permalink(couple_name, ceremony_location, wedding_date):
     return permalink
 
 def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, seo_keywords, model, client_testimonial, contact_page):
-    testimonial_instruction = f'Include this client testimonial in a blockquote: "<blockquote>{html.escape(client_testimonial)}</blockquote>"' if client_testimonial.strip() else "Generate a realistic testimonial quote from the couple."
+    testimonial_instruction = """
+    If a client testimonial is provided, include it in the blog post as follows:
+    <div class="testimonial">
+        <blockquote>
+            "[Insert the testimonial text here]"
+        </blockquote>
+        <p class="testimonial-author">- {couple_name}</p>
+    </div>
+    """ if client_testimonial.strip() else "Do not include a testimonial in the blog post."
     
     prompt = f"""
     Create a wedding blog post for a couple named {couple_name}, following these instructions:
@@ -131,7 +85,7 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, s
     9. Hyperlinks:
        - When mentioning venues or businesses with provided URLs, create HTML hyperlinks.
        - For example, if given "Oceanfront Resort Ballroom (https://www.example.com)", 
-            create a link like this: <a href="https://www.example.com">Oceanfront Resort Ballroom</a>
+         create a link like this: <a href="https://www.example.com">Oceanfront Resort Ballroom</a>
        - Do not use parentheses to show URLs. Always create proper HTML links.
 
     Additional Guidelines:
@@ -164,11 +118,11 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, s
 
     <p>[Summarize the wedding's unique aspects, include tips for similar weddings, and end with a call-to-action.]</p>
 
+    [If a testimonial was provided, insert it here using the format specified in the testimonial instruction.]
+
     <h2>[Create a header using the following SEO keywords: {cta_header_keywords}]</h2>
 
     <p>[Write a compelling call-to-action paragraph inviting readers to book your services. Include the contact page link: {contact_page}]</p>
-    
-    {testimonial_instruction}
     """
 
     completion = client.chat.completions.create(
@@ -184,8 +138,6 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, s
     )
 
     return completion.choices[0].message.content.strip()
-
-
 
 st.title("💍 Wedding Blog Post Generator")
 st.write(
