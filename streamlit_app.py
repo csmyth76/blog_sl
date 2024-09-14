@@ -1,6 +1,9 @@
 import streamlit as st
 from openai import OpenAI
 import html
+import re
+from unidecode import unidecode
+import datetime
 
 # Access your API key securely
 api_key = st.secrets["api_key"]
@@ -28,7 +31,12 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, s
 
     <p>[In this section, summarize the key details of the wedding day. Include information about the ceremony and reception venues, any unique aspects of the wedding, and highlight some emotional moments. Use the following wedding outline, but ONLY include details that are provided (non-empty):
     {wedding_outline}
-    Incorporate SEO keywords naturally throughout this section.]</p>
+    Incorporate SEO keywords naturally throughout this section.
+
+    If venue URLs are provided, create HTML links to the venues using appropriate anchor text that includes the venue names for better SEO. For example:
+    - If a ceremony venue URL is provided: <a href="[ceremony_venue_url]">[ceremony_venue_name]</a>
+    - If a reception venue URL is provided: <a href="[reception_venue_url]">[reception_venue_name]</a>
+    ]</p>
 
     <h2>Capturing Love and [Include one or two relevant SEO keywords]</h2>
 
@@ -62,7 +70,23 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, s
 
     return completion.choices[0].message.content.strip()
 
-
+def generate_permalink(couple_name, ceremony_location, wedding_date):
+    # Process couple's name: remove 'and', replace spaces with hyphens
+    couple_name = couple_name.lower().replace(' and ', '-').replace(' ', '-')
+    
+    # Process location: replace spaces with hyphens
+    location = ceremony_location.lower().replace(' ', '-')
+    
+    # Combine relevant information
+    permalink = f"{couple_name}-{location}-{wedding_date}"
+    
+    # Convert to ASCII, remove non-alphanumeric characters (except hyphens)
+    permalink = re.sub(r'[^a-z0-9-]+', '', unidecode(permalink))
+    
+    # Remove any double hyphens and trim hyphens from start/end
+    permalink = re.sub(r'-+', '-', permalink).strip('-')
+    
+    return permalink
 
 def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, seo_keywords, model, client_testimonial, contact_page):
     testimonial_instruction = f'Include this client testimonial in a blockquote: "<blockquote>{html.escape(client_testimonial)}</blockquote>"' if client_testimonial.strip() else "Generate a realistic testimonial quote from the couple."
@@ -134,6 +158,10 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, s
 
     <p>[Summarize the wedding's unique aspects, include tips for similar weddings, and end with a call-to-action.]</p>
 
+    <h2>[Create a header using the following SEO keywords: {cta_header_keywords}]</h2>
+
+    <p>[Write a compelling call-to-action paragraph inviting readers to book your services. Include the contact page link: {contact_page}]</p>
+    
     {testimonial_instruction}
     """
 
@@ -163,6 +191,8 @@ st.write("Fields marked with an asterisk (*) are required.")
 # a. Wedding Information
 st.header("Wedding Information")
 
+wedding_date = st.date_input("Wedding Date", value=None)
+
 st.subheader("Couple's Names*")
 col1, col2 = st.columns(2)
 with col1:
@@ -182,6 +212,7 @@ with col1:
     ceremony_time = st.text_input("Ceremony Time", "5:00 PM")
 with col2:
     ceremony_location = st.text_input("Ceremony City & State*", "e.g., Malibu, California")
+    ceremony_venue_url = st.text_input("Ceremony Venue Website (optional)", "")
 
 st.subheader("Reception Details")
 col1, col2 = st.columns(2)
@@ -190,6 +221,7 @@ with col1:
     reception_time = st.text_input("Reception Time", "7:00 PM")
 with col2:
     reception_location = st.text_input("Reception City & State*", "e.g., Malibu, California")
+    reception_venue_url = st.text_input("Reception Venue Website (optional)", "")
 
 decor_theme = st.text_input("Wedding Theme / Décor / Color Palette*", "e.g., Beach theme with shades of blue and coral")
 weather = st.text_input("Weather Conditions", "e.g., Clear sky with a beautiful sunset")
@@ -241,6 +273,8 @@ selected_tones = [tone for tone, checked in tone_checkboxes.items() if checked]
 
 seo_keywords = st.text_input("SEO Keywords to Rank For (comma-separated)*", "Malibu wedding photographer, beach wedding photography")
 
+cta_header_keywords = st.text_input("SEO Keywords for Call-to-Action Header", "e.g., book wedding photographer, Malibu wedding photography")
+
 # Model selection
 model = st.selectbox("Choose GPT Model", list(models.keys()), format_func=lambda x: models[x], index=0)
 
@@ -249,9 +283,11 @@ wedding_outline = "\n".join([
     f"- Ceremony Venue: {ceremony_venue}",
     f"- Ceremony Location: {ceremony_location}",
     f"- Ceremony Time: {ceremony_time}",
+    f"- Ceremony Venue URL: {ceremony_venue_url}",
     f"- Reception Venue: {reception_venue}",
     f"- Reception Location: {reception_location}",
     f"- Reception Time: {reception_time}",
+    f"- Reception Venue URL: {reception_venue_url}",
     f"- Wedding Theme/Décor: {decor_theme}",
     f"- Weather: {weather}",
     f"- First Look: {first_look}",
@@ -264,6 +300,7 @@ wedding_outline = "\n".join([
 wedding_outline = "\n".join(line for line in wedding_outline.split("\n") if line.split(": ", 1)[1].strip())
 
 if st.button("Generate Blog Post"):
+
     if not partner1_name or not partner2_name:
         st.error("Please enter both partners' names before generating the blog post.")
     elif not photographer_name or not photography_business:
@@ -278,6 +315,11 @@ if st.button("Generate Blog Post"):
         
         st.subheader("Generated Blog Post:")
         st.components.v1.html(blog_post_html, height=600, scrolling=True)
+
+        # Generate and display permalink suggestion
+        suggested_permalink = generate_permalink(couple_name, ceremony_location, wedding_date.strftime("%Y-%m-%d"))
+        st.subheader("Suggested Permalink:")
+        st.text(f"/{suggested_permalink}/")
 
         st.download_button(
             label="Download Blog Post as HTML",
