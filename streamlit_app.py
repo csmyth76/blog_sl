@@ -128,6 +128,12 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, s
        - Include 2-3 tips for couples planning a similar wedding.
        - Briefly explain why the location is ideal for weddings.
 
+    9. Hyperlinks:
+       - When mentioning venues or businesses with provided URLs, create HTML hyperlinks.
+       - For example, if given "Oceanfront Resort Ballroom (https://www.example.com)", 
+            create a link like this: <a href="https://www.example.com">Oceanfront Resort Ballroom</a>
+       - Do not use parentheses to show URLs. Always create proper HTML links.
+
     Additional Guidelines:
     - Write from the consistent perspective of the photographer ({photographer_name}), maintaining a first-person point of view throughout the post.
     - The overall tone should be a combination of the following: {', '.join(tones)}.
