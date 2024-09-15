@@ -17,22 +17,29 @@ models = {
 }
 
 def generate_permalink(couple_name, ceremony_location, wedding_date):
-    # Process couple's name: remove 'and', replace spaces with hyphens
-    couple_name = couple_name.lower().replace(' and ', '-').replace(' ', '-')
-    
-    # Process location: replace spaces with hyphens
-    location = ceremony_location.lower().replace(' ', '-')
-    
-    # Combine relevant information
-    permalink = f"{couple_name}-{location}-{wedding_date}"
-    
-    # Convert to ASCII, remove non-alphanumeric characters (except hyphens)
-    permalink = re.sub(r'[^a-z0-9-]+', '', unidecode(permalink))
-    
-    # Remove any double hyphens and trim hyphens from start/end
-    permalink = re.sub(r'-+', '-', permalink).strip('-')
-    
-    return permalink
+    try:
+        # Process couple's name: remove 'and', replace spaces with hyphens
+        couple_name = couple_name.lower().replace(' and ', '-').replace(' ', '-')
+        
+        # Process location: replace spaces with hyphens
+        location = ceremony_location.lower().replace(' ', '-')
+        
+        # Combine relevant information
+        permalink = f"{couple_name}-{location}-{wedding_date}"
+        
+        # Convert to ASCII, remove non-alphanumeric characters (except hyphens)
+        permalink = re.sub(r'[^a-z0-9-]+', '', unidecode(permalink))
+        
+        # Remove any double hyphens and trim hyphens from start/end
+        permalink = re.sub(r'-+', '-', permalink).strip('-')
+        
+        return permalink
+    except Exception as e:
+        error_message = f"Error generating permalink: {str(e)}\n"
+        error_message += f"Inputs: couple_name='{couple_name}', ceremony_location='{ceremony_location}', wedding_date='{wedding_date}'\n"
+        error_message += f"Traceback: {traceback.format_exc()}"
+        return None, error_message
+
 
 def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, seo_keywords, model, client_testimonial, contact_page):
     testimonial_instruction = """
@@ -274,10 +281,15 @@ if st.button("Generate Blog Post"):
         st.subheader("Generated Blog Post:")
         st.components.v1.html(blog_post_html, height=600, scrolling=True)
 
-        # Generate and display permalink suggestion
-        suggested_permalink = generate_permalink(couple_name, ceremony_location, wedding_date.strftime("%Y-%m-%d"))
-        st.subheader("Suggested Permalink:")
-        st.text(f"/{suggested_permalink}/")
+        # Generate and display permalink suggestion with error handling
+        permalink_result = generate_permalink(couple_name, ceremony_location, wedding_date.strftime("%Y-%m-%d"))
+        
+        if isinstance(permalink_result, tuple):  # Error occurred
+            st.error("Permalink could not be created. Here's the error information:")
+            st.text(permalink_result[1])
+        else:
+            st.subheader("Suggested Permalink:")
+            st.text(f"/{permalink_result}/")
 
         st.download_button(
             label="Download Blog Post as HTML",
