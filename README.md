@@ -65,7 +65,7 @@ The application is structured into several modules, each responsible for a speci
 
 5. Run the application:
    ```
-   streamlit run wedding_blog_generator/main.py
+   streamlit run streamlit_app.py
    ```
 
 ## Usage Guide
