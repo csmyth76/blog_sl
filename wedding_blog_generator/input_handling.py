@@ -60,28 +60,25 @@ def get_user_inputs(test_mode):
     inputs['photographer_name'] = st.text_input("Photographer's Name*", SAMPLE_DATA['photographer_name'] if test_mode else "John Doe")
     inputs['photography_business'] = st.text_input("Photography Business Name*", SAMPLE_DATA['photography_business'] if test_mode else "John Doe Photography")
     inputs['client_testimonial'] = st.text_area("Client Testimonial", SAMPLE_DATA['client_testimonial'] if test_mode else "John captured our wedding day beautifully. The photos are stunning and truly reflect the joy and love we felt. We couldn't be happier!")
-    inputs['contact_page'] = st.text_input("Contact Page Hyperlink", SAMPLE_DATA['contact_page'] if test_mode else "https://www.example.com/contact")
+    
+    if test_mode:
+        inputs['contact_page'] = "https://www.example.com/contact"
+        st.info(f"Test Mode: Using example contact page - {inputs['contact_page']}")
+    else:
+        inputs['contact_page'] = st.text_input("Contact Page Hyperlink*", "")
+
+    # New field for photographer's relationship with the couple
+    inputs['relationship_with_couple'] = st.text_area("Describe your relationship with the couple (e.g., fond memories of working together, inside jokes, anything you had in common, their dynamics as a couple, etc.)", 
+                                                      SAMPLE_DATA.get('relationship_with_couple', '') if test_mode else "")
 
     # Blog Post Goals
     st.header("Blog Post Goals")
-    st.subheader("Overall tone of the blog post (check all that apply)*")
+    
+    # Writing sample input
+    inputs['writing_sample'] = st.text_area("Provide a sample of your writing style (optional)", 
+                                            SAMPLE_DATA.get('writing_sample', '') if test_mode else "")
 
-    tone_options = [
-        "casual", "cheerful", "conversational", "elegant", "enthusiastic", "formal",
-        "fun", "informative", "professional", "quirky", "romantic", "snarky",
-        "trustworthy", "upbeat", "witty"
-    ]
-    sorted_tones = sorted(tone_options)
-    tones_per_column = 5
-    num_columns = (len(sorted_tones) + tones_per_column - 1) // tones_per_column
-    cols = st.columns(num_columns)
-    tone_checkboxes = {}
-    for i, tone in enumerate(sorted_tones):
-        with cols[i // tones_per_column]:
-            tone_checkboxes[tone] = st.checkbox(tone.capitalize(), value=tone.capitalize() in SAMPLE_DATA['selected_tones'] if test_mode else False)
-    inputs['selected_tones'] = [tone for tone, checked in tone_checkboxes.items() if checked]
-
-    inputs['seo_keywords'] = st.text_input("SEO Keywords to Rank For (comma-separated)*", SAMPLE_DATA['seo_keywords'] if test_mode else "Malibu wedding photographer, beach wedding photography")
+    inputs['seo_keywords'] = st.text_input("SEO Keywords to Rank For (comma-separated, optional)", SAMPLE_DATA['seo_keywords'] if test_mode else "")
     inputs['cta_header_keywords'] = st.text_input("SEO Keywords for Call-to-Action Header", SAMPLE_DATA['cta_header_keywords'] if test_mode else "e.g., book wedding photographer, Malibu wedding photography")
 
     # Model selection

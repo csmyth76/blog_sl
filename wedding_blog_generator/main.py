@@ -35,20 +35,21 @@ def main():
             st.error("Please enter the photographer's name and business name before generating the blog post.")
         elif not inputs['ceremony_venue'] or not inputs['ceremony_location'] or not inputs['reception_venue'] or not inputs['reception_location'] or not inputs['decor_theme']:
             st.error("Please fill in all required wedding information fields (marked with *) before generating the blog post.")
-        elif not inputs['selected_tones'] or not inputs['seo_keywords']:
-            st.error("Please select at least one tone and enter SEO keywords before generating the blog post.")
+        elif not test_mode and not inputs['contact_page']:
+            st.error("Please provide a contact page URL for the call-to-action.")
         else:
             with st.spinner(f"Generating blog post using {MODELS[inputs['model']]}..."):
                 blog_post_html = generate_blog_post(
                     processed_data['couple_name'], 
                     processed_data['wedding_outline'], 
                     inputs['photographer_name'], 
-                    inputs['selected_tones'], 
+                    inputs['writing_sample'],
                     inputs['seo_keywords'], 
                     inputs['model'], 
                     inputs['client_testimonial'], 
                     inputs['contact_page'], 
-                    inputs['cta_header_keywords']
+                    inputs['cta_header_keywords'],
+                    inputs['relationship_with_couple']
                 )
             
             # Generate and display permalink suggestion with error handling
