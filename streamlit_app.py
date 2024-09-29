@@ -3,6 +3,7 @@ from openai import OpenAI
 import html
 import re
 from unidecode import unidecode
+import datetime
 
 # Access your API key securely
 api_key = st.secrets["api_key"]
@@ -40,8 +41,7 @@ def generate_permalink(couple_name, ceremony_location, wedding_date):
         error_message += f"Traceback: {traceback.format_exc()}"
         return None, error_message
 
-
-def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, seo_keywords, model, client_testimonial, contact_page):
+def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, seo_keywords, model, client_testimonial, contact_page, cta_header_keywords):
     testimonial_instruction = """
     If a client testimonial is provided, include it in the blog post as follows:
     <div class="testimonial">
@@ -146,6 +146,40 @@ def generate_blog_post(couple_name, wedding_outline, photographer_name, tones, s
 
     return completion.choices[0].message.content.strip()
 
+# Step 1: Add Test Mode Toggle
+test_mode = st.sidebar.checkbox("Enable Test Mode")
+
+# Step 2: Define Sample Data
+SAMPLE_DATA = {
+    'partner1_name': 'Alex',
+    'partner1_gender': 'Male',
+    'partner2_name': 'Jordan',
+    'partner2_gender': 'Female',
+    'wedding_date': datetime.date(2023, 10, 15),
+    'ceremony_venue': "St. Mary's Church",
+    'ceremony_time': '5:00 PM',
+    'ceremony_location': 'Malibu, California',
+    'ceremony_venue_url': 'https://www.stmaryschurch.com',
+    'reception_venue': 'Oceanfront Resort Ballroom',
+    'reception_time': '7:00 PM',
+    'reception_location': 'Malibu, California',
+    'reception_venue_url': 'https://www.oceanfrontresort.com',
+    'decor_theme': 'Beach theme with shades of blue and coral',
+    'weather': 'Clear sky with a beautiful sunset',
+    'first_look': 'Beach Gazebo',
+    'first_dance_song': "'At Last' by Etta James",
+    'emotional_moment': "Bride's father's touching speech",
+    'special_moments': 'Surprise fireworks display, Sand ceremony',
+    'photographer_name': 'John Doe',
+    'photography_business': 'John Doe Photography',
+    'client_testimonial': "John captured our wedding day beautifully. The photos are stunning and truly reflect the joy and love we felt. We couldn't be happier!",
+    'contact_page': 'https://www.example.com/contact',
+    'selected_tones': ['Romantic', 'Professional'],
+    'seo_keywords': 'Malibu wedding photographer, beach wedding photography',
+    'cta_header_keywords': 'book wedding photographer, Malibu wedding photography',
+    'model': 'gpt-4'
+}
+
 st.title("💍 Wedding Blog Post Generator")
 st.write(
     "Create SEO-ready blog posts on behalf of your business. Complete as many fields as possible or applicable to better ensure a strengthened blog post."
@@ -156,16 +190,36 @@ st.write("Fields marked with an asterisk (*) are required.")
 # a. Wedding Information
 st.header("Wedding Information")
 
-wedding_date = st.date_input("Wedding Date", value=None)
+# Step 3: Modify Input Fields to Use Sample Data in Test Mode
+if test_mode:
+    wedding_date = st.date_input("Wedding Date", SAMPLE_DATA['wedding_date'])
+else:
+    wedding_date = st.date_input("Wedding Date", value=None)
 
 st.subheader("Couple's Names*")
 col1, col2 = st.columns(2)
 with col1:
-    partner1_name = st.text_input("Name of Partner 1*", "")
-    partner1_gender = st.selectbox("Gender of Partner 1", ["", "Male", "Female", "Non-binary", "Prefer not to say"])
+    if test_mode:
+        partner1_name = st.text_input("Name of Partner 1*", SAMPLE_DATA['partner1_name'])
+        partner1_gender = st.selectbox(
+            "Gender of Partner 1", 
+            ["", "Male", "Female", "Non-binary", "Prefer not to say"],
+            index=["", "Male", "Female", "Non-binary", "Prefer not to say"].index(SAMPLE_DATA['partner1_gender'])
+        )
+    else:
+        partner1_name = st.text_input("Name of Partner 1*", "")
+        partner1_gender = st.selectbox("Gender of Partner 1", ["", "Male", "Female", "Non-binary", "Prefer not to say"])
 with col2:
-    partner2_name = st.text_input("Name of Partner 2*", "")
-    partner2_gender = st.selectbox("Gender of Partner 2", ["", "Male", "Female", "Non-binary", "Prefer not to say"])
+    if test_mode:
+        partner2_name = st.text_input("Name of Partner 2*", SAMPLE_DATA['partner2_name'])
+        partner2_gender = st.selectbox(
+            "Gender of Partner 2", 
+            ["", "Male", "Female", "Non-binary", "Prefer not to say"],
+            index=["", "Male", "Female", "Non-binary", "Prefer not to say"].index(SAMPLE_DATA['partner2_gender'])
+        )
+    else:
+        partner2_name = st.text_input("Name of Partner 2*", "")
+        partner2_gender = st.selectbox("Gender of Partner 2", ["", "Male", "Female", "Non-binary", "Prefer not to say"])
 
 # Combine partner names for use in the rest of the application
 couple_name = f"{partner1_name} and {partner2_name}" if partner1_name and partner2_name else ""
@@ -173,37 +227,69 @@ couple_name = f"{partner1_name} and {partner2_name}" if partner1_name and partne
 st.subheader("Ceremony Details")
 col1, col2 = st.columns(2)
 with col1:
-    ceremony_venue = st.text_input("Ceremony Venue Name*", "e.g., St. Mary's Church")
-    ceremony_time = st.text_input("Ceremony Time", "5:00 PM")
+    if test_mode:
+        ceremony_venue = st.text_input("Ceremony Venue Name*", SAMPLE_DATA['ceremony_venue'])
+        ceremony_time = st.text_input("Ceremony Time", SAMPLE_DATA['ceremony_time'])
+    else:
+        ceremony_venue = st.text_input("Ceremony Venue Name*", "e.g., St. Mary's Church")
+        ceremony_time = st.text_input("Ceremony Time", "5:00 PM")
 with col2:
-    ceremony_location = st.text_input("Ceremony City & State*", "e.g., Malibu, California")
-    ceremony_venue_url = st.text_input("Ceremony Venue Website (optional)", "")
+    if test_mode:
+        ceremony_location = st.text_input("Ceremony City & State*", SAMPLE_DATA['ceremony_location'])
+        ceremony_venue_url = st.text_input("Ceremony Venue Website (optional)", SAMPLE_DATA['ceremony_venue_url'])
+    else:
+        ceremony_location = st.text_input("Ceremony City & State*", "e.g., Malibu, California")
+        ceremony_venue_url = st.text_input("Ceremony Venue Website (optional)", "")
 
 st.subheader("Reception Details")
 col1, col2 = st.columns(2)
 with col1:
-    reception_venue = st.text_input("Reception Venue Name*", "e.g., Oceanfront Resort Ballroom")
-    reception_time = st.text_input("Reception Time", "7:00 PM")
+    if test_mode:
+        reception_venue = st.text_input("Reception Venue Name*", SAMPLE_DATA['reception_venue'])
+        reception_time = st.text_input("Reception Time", SAMPLE_DATA['reception_time'])
+    else:
+        reception_venue = st.text_input("Reception Venue Name*", "e.g., Oceanfront Resort Ballroom")
+        reception_time = st.text_input("Reception Time", "7:00 PM")
 with col2:
-    reception_location = st.text_input("Reception City & State*", "e.g., Malibu, California")
-    reception_venue_url = st.text_input("Reception Venue Website (optional)", "")
+    if test_mode:
+        reception_location = st.text_input("Reception City & State*", SAMPLE_DATA['reception_location'])
+        reception_venue_url = st.text_input("Reception Venue Website (optional)", SAMPLE_DATA['reception_venue_url'])
+    else:
+        reception_location = st.text_input("Reception City & State*", "e.g., Malibu, California")
+        reception_venue_url = st.text_input("Reception Venue Website (optional)", "")
 
-decor_theme = st.text_input("Wedding Theme / Décor / Color Palette*", "e.g., Beach theme with shades of blue and coral")
-weather = st.text_input("Weather Conditions", "e.g., Clear sky with a beautiful sunset")
+if test_mode:
+    decor_theme = st.text_input("Wedding Theme / Décor / Color Palette*", SAMPLE_DATA['decor_theme'])
+    weather = st.text_input("Weather Conditions", SAMPLE_DATA['weather'])
+else:
+    decor_theme = st.text_input("Wedding Theme / Décor / Color Palette*", "e.g., Beach theme with shades of blue and coral")
+    weather = st.text_input("Weather Conditions", "e.g., Clear sky with a beautiful sunset")
 
 # b. Special Moments
 st.header("Special Moments")
-first_look = st.text_input("First Look Location (if applicable)", "e.g., Beach Gazebo")
-first_dance_song = st.text_input("First Dance Song", "'At Last' by Etta James")
-emotional_moment = st.text_area("An Emotional Moment or Memory from the Day", "e.g., Bride's father's touching speech")
-special_moments = st.text_area("Additional Special Moments or Unique Details", "e.g., Surprise fireworks display, Sand ceremony")
+if test_mode:
+    first_look = st.text_input("First Look Location (if applicable)", SAMPLE_DATA['first_look'])
+    first_dance_song = st.text_input("First Dance Song", SAMPLE_DATA['first_dance_song'])
+    emotional_moment = st.text_area("An Emotional Moment or Memory from the Day", SAMPLE_DATA['emotional_moment'])
+    special_moments = st.text_area("Additional Special Moments or Unique Details", SAMPLE_DATA['special_moments'])
+else:
+    first_look = st.text_input("First Look Location (if applicable)", "e.g., Beach Gazebo")
+    first_dance_song = st.text_input("First Dance Song", "'At Last' by Etta James")
+    emotional_moment = st.text_area("An Emotional Moment or Memory from the Day", "e.g., Bride's father's touching speech")
+    special_moments = st.text_area("Additional Special Moments or Unique Details", "e.g., Surprise fireworks display, Sand ceremony")
 
 # c. Photographer Information
 st.header("Photographer Information")
-photographer_name = st.text_input("Photographer's Name*", "John Doe")
-photography_business = st.text_input("Photography Business Name*", "John Doe Photography")
-client_testimonial = st.text_area("Client Testimonial", "John captured our wedding day beautifully. The photos are stunning and truly reflect the joy and love we felt. We couldn't be happier!")
-contact_page = st.text_input("Contact Page Hyperlink", "https://www.example.com/contact")
+if test_mode:
+    photographer_name = st.text_input("Photographer's Name*", SAMPLE_DATA['photographer_name'])
+    photography_business = st.text_input("Photography Business Name*", SAMPLE_DATA['photography_business'])
+    client_testimonial = st.text_area("Client Testimonial", SAMPLE_DATA['client_testimonial'])
+    contact_page = st.text_input("Contact Page Hyperlink", SAMPLE_DATA['contact_page'])
+else:
+    photographer_name = st.text_input("Photographer's Name*", "John Doe")
+    photography_business = st.text_input("Photography Business Name*", "John Doe Photography")
+    client_testimonial = st.text_area("Client Testimonial", "John captured our wedding day beautifully. The photos are stunning and truly reflect the joy and love we felt. We couldn't be happier!")
+    contact_page = st.text_input("Contact Page Hyperlink", "https://www.example.com/contact")
 
 # d. Blog Post Goals
 st.header("Blog Post Goals")
@@ -231,18 +317,36 @@ tone_checkboxes = {}
 # Distribute checkboxes across columns
 for i, tone in enumerate(sorted_tones):
     with cols[i // tones_per_column]:
-        tone_checkboxes[tone] = st.checkbox(tone.capitalize())
+        if test_mode:
+            tone_checkboxes[tone] = st.checkbox(tone.capitalize(), value=tone.capitalize() in SAMPLE_DATA['selected_tones'])
+        else:
+            tone_checkboxes[tone] = st.checkbox(tone.capitalize())
 
 # Get the selected tones
 selected_tones = [tone for tone, checked in tone_checkboxes.items() if checked]
 
-seo_keywords = st.text_input("SEO Keywords to Rank For (comma-separated)*", "Malibu wedding photographer, beach wedding photography")
-
-cta_header_keywords = st.text_input("SEO Keywords for Call-to-Action Header", "e.g., book wedding photographer, Malibu wedding photography")
+if test_mode:
+    seo_keywords = st.text_input("SEO Keywords to Rank For (comma-separated)*", SAMPLE_DATA['seo_keywords'])
+    cta_header_keywords = st.text_input("SEO Keywords for Call-to-Action Header", SAMPLE_DATA['cta_header_keywords'])
+else:
+    seo_keywords = st.text_input("SEO Keywords to Rank For (comma-separated)*", "Malibu wedding photographer, beach wedding photography")
+    cta_header_keywords = st.text_input("SEO Keywords for Call-to-Action Header", "e.g., book wedding photographer, Malibu wedding photography")
 
 # Model selection
-model = st.selectbox("Choose GPT Model", list(models.keys()), format_func=lambda x: models[x], index=0)
+if test_mode:
+    model_index = list(models.keys()).index(SAMPLE_DATA['model'])
+    model = st.selectbox("Choose GPT Model", list(models.keys()), index=model_index, format_func=lambda x: models[x])
+else:
+    model = st.selectbox("Choose GPT Model", list(models.keys()), format_func=lambda x: models[x], index=0)
 
+# Step 4: Ensure Switching Between Modes is Smooth
+if 'prev_test_mode' not in st.session_state:
+    st.session_state['prev_test_mode'] = test_mode
+elif st.session_state['prev_test_mode'] != test_mode:
+    st.session_state['prev_test_mode'] = test_mode
+    st.rerun()
+
+# Prepare the wedding outline
 wedding_outline = "\n".join([
     f"- Couple: {couple_name}",
     f"- Ceremony Venue: {ceremony_venue}",
@@ -276,14 +380,15 @@ if st.button("Generate Blog Post"):
         st.error("Please select at least one tone and enter SEO keywords before generating the blog post.")
     else:
         with st.spinner(f"Generating blog post using {models[model]}..."):
-            blog_post_html = generate_blog_post(couple_name, wedding_outline, photographer_name, selected_tones, seo_keywords, model, client_testimonial, contact_page)
+            blog_post_html = generate_blog_post(
+                couple_name, wedding_outline, photographer_name, selected_tones, seo_keywords, model, client_testimonial, contact_page, cta_header_keywords)
         
         st.subheader("Generated Blog Post:")
         st.components.v1.html(blog_post_html, height=600, scrolling=True)
 
         # Generate and display permalink suggestion with error handling
         permalink_result = generate_permalink(couple_name, ceremony_location, wedding_date.strftime("%Y-%m-%d"))
-        
+
         if isinstance(permalink_result, tuple):  # Error occurred
             st.error("Permalink could not be created. Here's the error information:")
             st.text(permalink_result[1])
